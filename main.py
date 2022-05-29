@@ -9,6 +9,7 @@ HEIGHT = 800
 black = (0,0,0)
 white = (255, 255, 255)
 gray = (128, 128, 128)
+dark_gray = (50, 50, 50)
 green = (0, 255, 0)
 gold = (212, 175, 55)
 blue = (0, 255, 255)
@@ -16,6 +17,7 @@ blue = (0, 255, 255)
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 pygame.display.set_caption('Beat Shit')
 label_font = pygame.font.Font('Roboto-Medium.ttf', 32)
+medium_font = pygame.font.Font('Roboto-Medium.ttf', 24)
 
 fps = 60
 timer = pygame.time.Clock()
@@ -29,6 +31,7 @@ active_length = 0
 active_beat = 0
 beat_changed = True
 
+
 # load in sounds
 hi_hat = mixer.Sound('sounds/hi hat.wav')
 snare = mixer.Sound('sounds/snare.wav')
@@ -36,6 +39,9 @@ kick = mixer.Sound('sounds/kick.wav')
 crash = mixer.Sound('sounds/crash.wav')
 clap = mixer.Sound('sounds/clap.wav')
 tom = mixer.Sound('sounds/tom.wav')
+
+# adding channels if beats are compromised while playing
+pygame.mixer.set_num_channels(instruments * 3)
 
 
 def play_notes():
@@ -106,6 +112,32 @@ while run:
 
   boxes = draw_grid(clicked, active_beat)
 
+  # lower menu buttons
+  play_pause = pygame.draw.rect(screen, gray, [50, HEIGHT - 150, 200, 100], 0, 5)
+  play_text = label_font.render('Play / Pause', True, white)
+  screen.blit(play_text, (60, HEIGHT - 130))
+  
+  if playing:
+    play_text2 = medium_font.render('Playing', True, dark_gray)
+  else:
+    play_text2 = medium_font.render('Paused', True, dark_gray)
+  screen.blit(play_text2, (60, HEIGHT - 100))
+
+  # bpm stuff
+  bpm_rect = pygame.draw.rect(screen, gray, [ 300, HEIGHT - 150, 200, 100], 5, 5)
+  bpm_text = medium_font.render('Beats Per Minute', True, white)
+  screen.blit(bpm_text, (308, HEIGHT - 130))
+  
+  bpm_text2 = label_font.render(f'{bpm}', True, white)
+  screen.blit(bpm_text2, (370, HEIGHT - 100))
+  
+  bpm_add_rect = pygame.draw.rect(screen, gray, [510, HEIGHT - 150, 48, 48], 0, 5)
+  bpm_sub_rect = pygame.draw.rect(screen, gray, [510, HEIGHT - 100, 48, 48], 0, 5)
+  add_text = medium_font.render('+5', True, white)
+  sub_text = medium_font.render('-5', True, white)
+  screen.blit(add_text, (520, HEIGHT - 140))
+  screen.blit(sub_text, (520, HEIGHT - 90))
+
   if beat_changed:
     play_notes()
     beat_changed = False
@@ -120,6 +152,17 @@ while run:
         if boxes[i][0].collidepoint(event.pos):
           coords = boxes[i][1]
           clicked[coords[1]][coords[0]] *= -1
+    if event.type == pygame.MOUSEBUTTONUP:
+      if play_pause.collidepoint(event.pos):
+        if playing:
+          playing = False
+        elif not playing:
+          playing = True
+      
+      elif bpm_add_rect.collidepoint(event.pos):
+        bpm += 5
+      elif bpm_sub_rect.collidepoint(event.pos):
+        bpm -= 5
     
   beat_length = 3600 // bpm
 
